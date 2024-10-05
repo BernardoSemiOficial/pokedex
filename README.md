@@ -12,4 +12,4 @@ O proposito de fazer esse aplicação foi para treinar aplicações com Javascri
 
 ## Resultado do projeto
 
-![Imagem do projeto](./assets/images/pokedex.JPG)
+![Imagem do projeto](./assets/images/pokedex.jpg)
