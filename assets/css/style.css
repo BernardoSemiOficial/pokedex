@@ -226,6 +226,12 @@ body {
   line-height: 1.6rem;
   font-style: italic;
 }
+#sentinel {
+  height: 1px; /* A altura mínima que queremos observar */
+}
+[hidden] {
+  display: none;
+}
 
 @media screen and (max-width: 1200px) {
   .pokemon__content__list {

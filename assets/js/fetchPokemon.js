@@ -1,16 +1,23 @@
-const fetchPokemon = async () => {
-  const getPokemonsUrl = (id) => `https://pokeapi.co/api/v2/pokemon/${id}`;
-
-  const pokemonsPromises = [];
-
-  for (let id = 1; id <= 150; id++) {
-    const response = await fetch(getPokemonsUrl(id));
-    pokemonsPromises.push(await response.json());
+const buscarPokemons = async (nextPage = "") => {
+  const url = new URL(
+    nextPage ? nextPage : "https://pokeapi.co/api/v2/pokemon"
+  );
+  if (!nextPage) {
+    url.searchParams.set("limit", 10);
+    url.searchParams.set("offset", 0);
   }
-
-  const pokemonsPromisesResolvidas = await Promise.all(pokemonsPromises);
-
-  return pokemonsPromisesResolvidas;
+  const pokemonsPromise = await fetch(url);
+  const pokemons = await pokemonsPromise.json();
+  return pokemons;
 };
 
-export { fetchPokemon };
+const buscarPokemonsDetalhe = async (pokemonUrls = []) => {
+  const pokemonFetch = pokemonUrls.map((pokemon) => fetch(pokemon.url));
+  const pokemonsPromise = await Promise.all(pokemonFetch);
+  const pokemons = await Promise.all(
+    pokemonsPromise.map((pokemon) => pokemon.json())
+  );
+  return pokemons;
+};
+
+export { buscarPokemons, buscarPokemonsDetalhe };

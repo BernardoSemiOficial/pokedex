@@ -40,6 +40,8 @@
         </section>
 
         <section class="pokemon__content">
+          <ul class="pokemon__content__list" data-list-pokemons></ul>
+
           <div class="loader" data-loader>
             <!-- Animação Carregamento de Água -->
             <!-- <lottie-player src="https://assets4.lottiefiles.com/datafiles/ORpUnaV6z0mJ17E/data.json" background="transparent"
@@ -58,7 +60,8 @@
                         style="width: 250px; height: 250px; fill: #444444; color: #444444;" loop autoplay></lottie-player> -->
           </div>
 
-          <ul class="pokemon__content__list" data-list-pokemons></ul>
+          <!-- Sentinela que observa quando o final da página é atingido -->
+          <div id="sentinela"></div>
         </section>
       </div>
     </section>

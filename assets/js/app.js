@@ -1,43 +1,56 @@
-import { criarCardPokemon } from "./CriarCardPokemon.js";
-import { fetchPokemon } from "./fetchPokemon.js";
+import { criarCardPokemon } from "./criarCardPokemon.js";
+import { buscarPokemons, buscarPokemonsDetalhe } from "./fetchPokemon.js";
+import { ativarCarregamento, formatarInfosPokemon } from "./utils.js";
 
-const inputSearch = document.querySelector("[data-search]");
-
-window.addEventListener("load", async () => {
-  const arrayPokemons = await fetchPokemon();
-
-  const arrayPokemonsInfo = arrayPokemons.map((pokemon) => {
-    return {
-      id: pokemon.id,
-      nome: pokemon.name,
-      tipo: typePokemon(pokemon.types),
-      imagem: pokemon.sprites.other["official-artwork"].front_default,
-    };
-  });
-
-  setTimeout(() => {
-    loaderAplication(arrayPokemonsInfo);
-  }, 4000);
+window.addEventListener("load", () => {
+  carregarAplicacao();
 });
 
-const loaderAplication = (arrayPokemonsInfo) => {
-  // Remover loader
-  const loader = document.querySelector("[data-loader]");
-  loader.remove();
+const pokemons = {
+  nextPage: "",
+  itens: [],
+  carregando: false,
+};
+const fieldSearch = document.querySelector("[data-search]");
+const sentinela = document.getElementById("sentinela");
+
+const carregarAplicacao = async () => {
+  // Habilitar carregamento
+  pokemons.carregando = true;
+  ativarCarregamento(true);
+
+  const dados = await buscarDados();
+
+  // Desligar carregamento
+  pokemons.carregando = false;
+  ativarCarregamento(false);
 
   // Renderizar Pokemons
-  criarCardPokemon(arrayPokemonsInfo);
+  criarCardPokemon(dados);
 
-  // Search Pokemons
+  iniciarPesquisa();
+  observarSentinela();
+};
+
+const iniciarPesquisa = () => {
+  let idTimeout = undefined;
+  // Pesquisar Pokemons
   const listaPokemonsChildren = Array.from(
     document.querySelector("[data-list-pokemons]").children
   );
-  inputSearch.addEventListener("input", (evento) =>
-    searchPokemon(evento, listaPokemonsChildren)
-  );
+  const handlerInput = (evento) => {
+    if (idTimeout) clearTimeout(idTimeout);
+    idTimeout = setTimeout(
+      () => pesquisarPokemon(evento, listaPokemonsChildren),
+      500
+    );
+  };
+
+  fieldSearch.removeEventListener("input", handlerInput);
+  fieldSearch.addEventListener("input", handlerInput);
 };
 
-const searchPokemon = (evento, listaPokemonsChildren) => {
+const pesquisarPokemon = (evento, listaPokemonsChildren) => {
   const pokemonSearch = evento.target.value.toLowerCase();
   const resultadoSearch = listaPokemonsChildren.filter((pokemon) =>
     pokemon.dataset.pokemonName.includes(pokemonSearch)
@@ -54,12 +67,47 @@ const searchPokemon = (evento, listaPokemonsChildren) => {
   }
 };
 
-const typePokemon = (arrayType) => {
-  let type = [];
+const buscarDados = async (nextPage = "") => {
+  const pokemonsUrlResponse = await buscarPokemons(nextPage);
+  pokemons.nextPage = pokemonsUrlResponse.next;
+  const pokemonsResponse = await buscarPokemonsDetalhe(
+    pokemonsUrlResponse.results
+  );
+  const dados = formatarInfosPokemon(pokemonsResponse);
+  pokemons.itens.push(dados);
+  return dados;
+};
 
-  arrayType.forEach((array) => type.push(array.type.name));
+const observarSentinela = () => {
+  const observer = new IntersectionObserver(lidarComSentinela, {
+    root: null,
+    rootMargin: "0px", // Sem margem extra
+    threshold: 1.0, // 100% visível
+  });
+  observer.observe(sentinela);
+};
 
-  type = type.join(", ");
+const lidarComSentinela = async (entries) => {
+  const sentinela = entries.find((entry) => entry.target.id === "sentinela");
+  const inputSearch = fieldSearch.querySelector("input");
+  if (
+    sentinela.isIntersecting &&
+    !pokemons.carregando &&
+    inputSearch.value === ""
+  ) {
+    // Habilitar carregamento
+    pokemons.carregando = true;
+    ativarCarregamento(true);
 
-  return type;
+    const dados = await buscarDados(pokemons.nextPage);
+
+    // Desligar carregamento
+    pokemons.carregando = false;
+    ativarCarregamento(false);
+
+    // Renderizar Pokemons
+    criarCardPokemon(dados);
+
+    iniciarPesquisa();
+  }
 };
