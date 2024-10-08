@@ -11,7 +11,7 @@ const pokemons = {
   itens: [],
   carregando: false,
 };
-const inputSearch = document.querySelector("[data-search]");
+const fieldSearch = document.querySelector("[data-search]");
 const sentinela = document.getElementById("sentinela");
 
 const carregarAplicacao = async () => {
@@ -28,15 +28,26 @@ const carregarAplicacao = async () => {
   // Renderizar Pokemons
   criarCardPokemon(dados);
 
+  iniciarPesquisa();
+  observarSentinela();
+};
+
+const iniciarPesquisa = () => {
+  let idTimeout = undefined;
   // Pesquisar Pokemons
   const listaPokemonsChildren = Array.from(
     document.querySelector("[data-list-pokemons]").children
   );
-  inputSearch.addEventListener("input", (evento) =>
-    pesquisarPokemon(evento, listaPokemonsChildren)
-  );
+  const handlerInput = (evento) => {
+    if (idTimeout) clearTimeout(idTimeout);
+    idTimeout = setTimeout(
+      () => pesquisarPokemon(evento, listaPokemonsChildren),
+      500
+    );
+  };
 
-  observarSentinela();
+  fieldSearch.removeEventListener("input", handlerInput);
+  fieldSearch.addEventListener("input", handlerInput);
 };
 
 const pesquisarPokemon = (evento, listaPokemonsChildren) => {
@@ -78,7 +89,12 @@ const observarSentinela = () => {
 
 const lidarComSentinela = async (entries) => {
   const sentinela = entries.find((entry) => entry.target.id === "sentinela");
-  if (sentinela.isIntersecting && !pokemons.carregando) {
+  const inputSearch = fieldSearch.querySelector("input");
+  if (
+    sentinela.isIntersecting &&
+    !pokemons.carregando &&
+    inputSearch.value === ""
+  ) {
     // Habilitar carregamento
     pokemons.carregando = true;
     ativarCarregamento(true);
@@ -91,5 +107,7 @@ const lidarComSentinela = async (entries) => {
 
     // Renderizar Pokemons
     criarCardPokemon(dados);
+
+    iniciarPesquisa();
   }
 };
