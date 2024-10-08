@@ -1,5 +1,5 @@
 import { criarCardPokemon } from "./criarCardPokemon.js";
-import { fetchPokemon } from "./fetchPokemon.js";
+import { buscarPokemons, buscarPokemonsDetalhe } from "./fetchPokemon.js";
 import { ativarCarregamento, formatarInfosPokemon } from "./utils.js";
 
 window.addEventListener("load", () => {
@@ -19,16 +19,14 @@ const carregarAplicacao = async () => {
   pokemons.carregando = true;
   ativarCarregamento(true);
 
-  const pokemonsResponse = await fetchPokemon();
-  pokemons.nextPage = pokemonsResponse.next;
-  pokemons.itens.push(...formatarInfosPokemon(pokemonsResponse.results));
+  const dados = await buscarDados();
 
   // Desligar carregamento
   pokemons.carregando = false;
   ativarCarregamento(false);
 
   // Renderizar Pokemons
-  criarCardPokemon(pokemons);
+  criarCardPokemon(dados);
 
   // Pesquisar Pokemons
   const listaPokemonsChildren = Array.from(
@@ -58,6 +56,17 @@ const pesquisarPokemon = (evento, listaPokemonsChildren) => {
   }
 };
 
+const buscarDados = async (nextPage = "") => {
+  const pokemonsUrlResponse = await buscarPokemons(nextPage);
+  pokemons.nextPage = pokemonsUrlResponse.next;
+  const pokemonsResponse = await buscarPokemonsDetalhe(
+    pokemonsUrlResponse.results
+  );
+  const dados = formatarInfosPokemon(pokemonsResponse);
+  pokemons.itens.push(dados);
+  return dados;
+};
+
 const observarSentinela = () => {
   const observer = new IntersectionObserver(lidarComSentinela, {
     root: null,
@@ -70,8 +79,17 @@ const observarSentinela = () => {
 const lidarComSentinela = async (entries) => {
   const sentinela = entries.find((entry) => entry.target.id === "sentinela");
   if (sentinela.isIntersecting && !pokemons.carregando) {
-    const pokemonsResponse = await fetchPokemon();
-    pokemons.nextPage = pokemonsResponse.next;
-    pokemons.itens.push(...formatarInfosPokemon(pokemonsResponse.results));
+    // Habilitar carregamento
+    pokemons.carregando = true;
+    ativarCarregamento(true);
+
+    const dados = await buscarDados(pokemons.nextPage);
+
+    // Desligar carregamento
+    pokemons.carregando = false;
+    ativarCarregamento(false);
+
+    // Renderizar Pokemons
+    criarCardPokemon(dados);
   }
 };
